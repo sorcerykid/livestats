@@ -8,7 +8,8 @@
 --------------------------------------------------------
 
 local export_timer = 0
-local export_filespec = "/var/www/html/assets/minetest" .. minetest.setting_get( "port" ) .. ".js"
+local export_filespec = "/var/www/html/assets/minetest.js"
+local export_player_bounds = { x_min = -130, x_max = 400, z_min = -400, z_max = 400, y_min = -55 }
 local server_uptime = 0.0
 local server_max_lag = 0.0
 local server_avg_lag = 0.0
@@ -22,7 +23,7 @@ minetest.register_globalstep( function( dtime )
 	xtime = xtime + dtime
 
 	-- every 20 seconds export server and player stats
-        if xtime >= 20 then
+        if export_filespec and xtime >= 20 then
 		local file, err = io.open( export_filespec, "w" )
 		local ctime = os.time( )
 		local env_time = minetest.get_timeofday( ) * 24 * 60
@@ -37,7 +38,9 @@ minetest.register_globalstep( function( dtime )
         	for i, p in ipairs( registry.player_list ) do
 			local pos = p.obj:getpos( )
 			local hp = p.obj:get_hp( )
-			if pos.x >= -130 and pos.x <= 400 and pos.z >= -400 and pos.z <= 400 and pos.y >= -55 then
+			local bounds = export_player_bounds
+
+			if pos.x >= bounds.x_min and pos.x <= bounds.x_max and pos.z >= bounds.z_min and pos.z <= bounds.z_max and pos.y >= bounds.y_min then
 	                	file:write( string.format( '\t{ name: "%s", rank: %d, time: %d, skin: "%s", life: %d, horz: %d, vert: %d },\n',
 					p.name, p.rank - 1, ctime - p.time, skins.skins[ p.name ], hp, pos.x, pos.z ) )
 			else
@@ -54,13 +57,10 @@ minetest.register_globalstep( function( dtime )
 	-- every second record server max_lag and avg_lag
 	if rtime >= 1 then
 		local s = minetest.get_server_status( )
-server_uptime = s.uptime
-server_avg_lag = s.avg_lag
-server_max_lag = s.max_lag
 
---		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
---		server_uptime = tonumber( server_uptime )
---		server_avg_lag = tonumber( server_avg_lag )
+		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
+		server_uptime = tonumber( server_uptime )
+		server_avg_lag = tonumber( server_avg_lag )
 		server_max_lag = math.max( server_max_lag, server_avg_lag )
 
 		rtime = 0
@@ -68,16 +68,12 @@ server_max_lag = s.max_lag
 end )
 
 minetest.register_on_shutdown( function( )
-if true then return end
 	local file, err = io.open( export_filespec, "w" )
 	if err then return end
 
 	file:write( 'mt_server_stats = null;\n' )
 	file:close( )
 end )
-
-local get_server_status = function ( )
-end
 
 minetest.register_chatcommand( "top", {
         description = "Show realtime information about the server",
