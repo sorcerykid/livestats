@@ -9,13 +9,13 @@
 
 local export_timer = 0
 local export_filespec = "/var/www/html/assets/minetest.js"
-local export_player_bounds = { x_min = -130, x_max = 400, z_min = -400, z_max = 400, y_min = -55 }
+local export_player_bounds = { x_min = -400, x_max = 400, z_min = -400, z_max = 400, y_min = -55 }
 local server_uptime = 0.0
 local server_max_lag = 0.0
 local server_avg_lag = 0.0
 
-local rtime = 0.0
-local xtime = 0.0
+local rtime = 1
+local xtime = 20
 
 minetest.register_globalstep( function( dtime )
 
@@ -42,10 +42,10 @@ minetest.register_globalstep( function( dtime )
 
 			if pos.x >= bounds.x_min and pos.x <= bounds.x_max and pos.z >= bounds.z_min and pos.z <= bounds.z_max and pos.y >= bounds.y_min then
 	                	file:write( string.format( '\t{ name: "%s", rank: %d, time: %d, skin: "%s", life: %d, horz: %d, vert: %d },\n',
-					p.name, p.rank - 1, ctime - p.time, skins.skins[ p.name ], hp, pos.x, pos.z ) )
+					p.name, p.rank - 1, ctime - p.newtime, skins.skins[ p.name ], hp, pos.x, pos.z ) )
 			else
 	                	file:write( string.format( '\t{ name: "%s", rank: %d, time: %d, skin: "%s", life: %d, horz: null, vert: null },\n',
-					p.name, p.rank - 1, ctime - p.time, skins.skins[ p.name ], hp ) )
+					p.name, p.rank - 1, ctime - p.newtime, skins.skins[ p.name ], hp ) )
 			end
 		end
 		file:write( '];\n' )
@@ -57,10 +57,13 @@ minetest.register_globalstep( function( dtime )
 	-- every second record server max_lag and avg_lag
 	if rtime >= 1 then
 		local s = minetest.get_server_status( )
+server_uptime = s.uptime
+server_avg_lag = s.avg_lag
+server_max_lag = s.max_lag
 
-		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
-		server_uptime = tonumber( server_uptime )
-		server_avg_lag = tonumber( server_avg_lag )
+--		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
+--		server_uptime = tonumber( server_uptime )
+--		server_avg_lag = tonumber( server_avg_lag )
 		server_max_lag = math.max( server_max_lag, server_avg_lag )
 
 		rtime = 0
@@ -68,6 +71,8 @@ minetest.register_globalstep( function( dtime )
 end )
 
 minetest.register_on_shutdown( function( )
+	if not export_filespec then return end
+
 	local file, err = io.open( export_filespec, "w" )
 	if err then return end
 
@@ -124,7 +129,7 @@ minetest.register_chatcommand( "top", {
 			for idx = ( page_idx - 1 ) * page_size + 1, math.min( page_idx * page_size, #registry.player_list ) do
 				local p = registry.player_list[ idx ]
 				local address = minetest.get_player_information( p.name ).address
-				local lifetime =  ctime - p.time
+				local lifetime =  ctime - p.newtime
 
 				local vert = 2.0 + num * 0.5
 				formspec = formspec 
