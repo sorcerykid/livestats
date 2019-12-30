@@ -1,6 +1,8 @@
 LiveStats Mod v1.1
 By Leslie E. Krause
 
+LiveStats provides a chat command to visually monitor server and player status in realtime
+as well as a JavaScript exporter for easily embedding stats into a Webpage.
 
 Repository
 ----------------------
@@ -19,6 +21,9 @@ Minetest 0.4.14+ required
 
 Dependencies
 ----------------------
+
+Default Mod (required)
+  https://github.com/minetest/minetest_game
 
 ActiveFormspecs Mod (required)
   https://bitbucket.org/sorcerykid/formspecs
