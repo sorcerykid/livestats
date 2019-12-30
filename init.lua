@@ -57,13 +57,10 @@ minetest.register_globalstep( function( dtime )
 	-- every second record server max_lag and avg_lag
 	if rtime >= 1 then
 		local s = minetest.get_server_status( )
-server_uptime = s.uptime
-server_avg_lag = s.avg_lag
-server_max_lag = s.max_lag
 
---		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
---		server_uptime = tonumber( server_uptime )
---		server_avg_lag = tonumber( server_avg_lag )
+		server_uptime, server_avg_lag = string.match( s, "uptime=([0-9.]+), max_lag=([0-9.]+)" )
+		server_uptime = tonumber( server_uptime )
+		server_avg_lag = tonumber( server_avg_lag )
 		server_max_lag = math.max( server_max_lag, server_avg_lag )
 
 		rtime = 0
